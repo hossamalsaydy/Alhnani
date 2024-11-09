@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عرض البيانات</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+        }
+        .data-box {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="data-box">
+        <h2>البيانات المدخلة</h2>
+        <p><strong>اسم المستخدم:</strong> <span id="displayUsername"></span></p>
+        <p><strong>كلمة المرور:</strong> <span id="displayPassword"></span></p>
+        <button onclick="window.location.href='gg.html'">تسجيل الدخول</button>
+    </div>
+<script>
+    // دالة لتحويل كلمة المرور إلى شكل مشفر
+    function encryptPassword(password) {
+        return '*'.repeat(password.length); // استبدال كل حرف بنجمة
+    }
+
+    document.getElementById('displayUsername').textContent = localStorage.getItem('username');
+    const password = localStorage.getItem('password');
+    document.getElementById('displayPassword').textContent = encryptPassword(password);
+</script>
+</body>
+</html>
